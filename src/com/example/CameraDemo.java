@@ -20,6 +20,7 @@ public class CameraDemo extends Activity {
 	Camera camera;
 	Preview preview;
 	Button buttonClick;
+	int stillCount = 0;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -32,10 +33,9 @@ public class CameraDemo extends Activity {
 		buttonClick = (Button) findViewById(R.id.buttonClick);
 		buttonClick.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-//				for (int i = 0; i < 5; i++) {
 					preview.camera.takePicture(shutterCallback, rawCallback,
 							jpegCallback);
-//				}
+					buttonClick.setEnabled(false);
 			}
 		});
 
@@ -56,14 +56,12 @@ public class CameraDemo extends Activity {
 		}
 	};
 
-	/** Handles data for raw picture */
 	PictureCallback rawCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
-			Log.d(TAG, "onPictureTaken - raw");
+			Log.d(TAG, "onPictureTaken - raw with data = " + ((data != null) ? data.length : " NULL"));
 		}
 	};
 
-	/** Handles data for jpeg picture */
 	PictureCallback jpegCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
 			FileOutputStream outStream = null;
@@ -87,7 +85,15 @@ public class CameraDemo extends Activity {
 			}
 			Log.d(TAG, "onPictureTaken - jpeg");
 			try {
+				stillCount++;
 				camera.startPreview();
+				if (stillCount < 10) {
+					preview.camera.takePicture(shutterCallback, rawCallback,
+							jpegCallback);
+				} else {
+					stillCount = 0;
+					buttonClick.setEnabled(true);
+				}
 			} catch (Exception e) {
 				Log.d(TAG, "Error starting preview: " + e.toString());
 			}

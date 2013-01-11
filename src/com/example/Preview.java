@@ -29,12 +29,15 @@ class Preview extends SurfaceView implements SurfaceHolder.Callback {
         mHolder = getHolder();
         mHolder.addCallback(this);
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        
+        camera = openFrontFacingCamera();
+        camera.setDisplayOrientation(90);
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
         // The Surface has been created, acquire the camera and tell it where
         // to draw.
-        camera = Camera.open();
+        //camera = Camera.open();
         try {
 			camera.setPreviewDisplay(holder);
 			
@@ -44,7 +47,7 @@ class Preview extends SurfaceView implements SurfaceHolder.Callback {
 				public void onPreviewFrame(byte[] data, Camera arg1) {
 					FileOutputStream outStream = null;
 					try {
-						outStream = new FileOutputStream(String.format("/sdcard/eyeverify/preview%d.jpg", System.currentTimeMillis()));	
+						outStream = new FileOutputStream(String.format("/sdcard/eyeverify/preview%d.bmp", System.currentTimeMillis()));	
 						outStream.write(data);
 						outStream.close();
 						Log.d(TAG, "onPreviewFrame - wrote bytes: " + data.length);
@@ -79,6 +82,26 @@ class Preview extends SurfaceView implements SurfaceHolder.Callback {
         camera.startPreview();
     }
 
+    private Camera openFrontFacingCamera() {
+		int cameraCount = 0;
+		Camera cam = null;
+		Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+		cameraCount = Camera.getNumberOfCameras();
+		for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
+			Camera.getCameraInfo(camIdx, cameraInfo);
+			if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+				try {
+					cam = Camera.open(camIdx);
+				} catch (RuntimeException e) {
+					Log.e(TAG,
+							"Camera failed to open: " + e.getLocalizedMessage());
+				}
+			}
+		}
+
+		return cam;
+	}
+    
     @Override
     public void draw(Canvas canvas) {
     		super.draw(canvas);
